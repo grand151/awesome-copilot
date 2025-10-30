@@ -1,0 +1,32 @@
+{
+  "name": "react-coding-agent-webcontainer",
+  "version": "1.0.0",
+  "description": "React-based coding agent with WebContainer integration",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@webcontainer/api": "^1.2.0",
+    "@monaco-editor/react": "^4.6.0",
+    "@xterm/xterm": "^5.5.0",
+    "@xterm/addon-fit": "^0.10.0",
+    "lucide-react": "^0.460.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "vite": "^5.4.11",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.14"
+  }
+}

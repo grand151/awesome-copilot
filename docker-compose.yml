@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  react-coding-agent:
+    build:
+      context: ./coding-agent
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    container_name: react-coding-agent-webcontainer
+    networks:
+      - coding-agent-network
+
+networks:
+  coding-agent-network:
+    driver: bridge

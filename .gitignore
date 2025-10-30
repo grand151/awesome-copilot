@@ -5,3 +5,8 @@ Copilot-Processing.md
 # macOS system files
 .DS_Store
 *.tmp
+
+# Coding agent build artifacts
+coding-agent/node_modules
+coding-agent/dist
+coding-agent/package-lock.json

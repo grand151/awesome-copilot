@@ -10,6 +10,7 @@ export default function CodeEditor({ webcontainer, selectedFile }) {
     if (selectedFile && webcontainer) {
       loadFile(selectedFile);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFile, webcontainer]);
 
   const loadFile = async (path) => {

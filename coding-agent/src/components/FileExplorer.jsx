@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { File, Folder, FolderOpen, Plus, Trash2, Edit } from 'lucide-react';
+import { File, Folder, FolderOpen, Trash2 } from 'lucide-react';
 
 export default function FileExplorer({ webcontainer, onFileSelect, selectedFile }) {
   const [files, setFiles] = useState([]);
@@ -12,6 +12,7 @@ export default function FileExplorer({ webcontainer, onFileSelect, selectedFile 
     if (webcontainer) {
       loadFiles();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [webcontainer]);
 
   const loadFiles = async () => {

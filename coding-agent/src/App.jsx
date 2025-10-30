@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Code2, Terminal as TerminalIcon, Globe } from 'lucide-react';
+import { Code2, Terminal as TerminalIcon, Globe, RefreshCw } from 'lucide-react';
 import FileExplorer from './components/FileExplorer';
 import CodeEditor from './components/CodeEditor';
 import Terminal from './components/Terminal';
-import { getWebContainer, initializeFiles } from './utils/webcontainer';
+import TemplateSelector from './components/TemplateSelector';
+import { getWebContainer, initializeFiles, switchTemplate, detectAndSwitchTemplate } from './utils/webcontainer';
+import { projectTemplates } from './utils/templates';
 
 function App() {
   const [webcontainer, setWebcontainer] = useState(null);
@@ -11,16 +13,19 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [currentTemplate, setCurrentTemplate] = useState('nodejs');
+  const [isSwitching, setIsSwitching] = useState(false);
 
   useEffect(() => {
     initWebContainer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const initWebContainer = async () => {
     try {
       setIsLoading(true);
       const container = await getWebContainer();
-      await initializeFiles(container);
+      await initializeFiles(container, currentTemplate);
       
       // Listen for server-ready event
       container.on('server-ready', (port, url) => {
@@ -35,6 +40,60 @@ function App() {
       setError(err.message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSwitchTemplate = async (templateName) => {
+    if (!webcontainer || isSwitching) return;
+    
+    setIsSwitching(true);
+    setPreviewUrl('');
+    
+    try {
+      await switchTemplate(webcontainer, templateName);
+      setCurrentTemplate(templateName);
+      
+      // Update selected file based on template
+      const firstFiles = {
+        nodejs: 'index.js',
+        typescript: 'index.ts',
+        python: 'main.py',
+        react: 'src/App.jsx',
+        express: 'server.js',
+        vue: 'src/App.vue',
+        svelte: 'src/App.svelte'
+      };
+      setSelectedFile(firstFiles[templateName] || 'index.js');
+      
+      console.log(`✅ Switched to ${templateName} template`);
+    } catch (err) {
+      console.error('Failed to switch template:', err);
+      alert(`Failed to switch template: ${err.message}`);
+    } finally {
+      setIsSwitching(false);
+    }
+  };
+
+  const handleAutoDetect = async () => {
+    if (!webcontainer) return;
+    
+    try {
+      const detectedType = await detectAndSwitchTemplate(webcontainer);
+      console.log(`🔍 Auto-detected project type: ${detectedType}`);
+      
+      if (detectedType !== currentTemplate) {
+        const confirmSwitch = confirm(
+          `Auto-detected ${detectedType} project. Switch template?`
+        );
+        if (confirmSwitch) {
+          await handleSwitchTemplate(detectedType);
+        }
+      } else {
+        alert(`Project is already using ${detectedType} template ✓`);
+      }
+    } catch (err) {
+      console.error('Auto-detection failed:', err);
+      alert('Auto-detection failed. Using current template.');
     }
   };
 
@@ -103,6 +162,8 @@ function App() {
       height: '100vh',
       backgroundColor: '#1e1e1e',
       color: '#d4d4d4',
+      opacity: isSwitching ? 0.6 : 1,
+      pointerEvents: isSwitching ? 'none' : 'auto',
     }}>
       {/* Header */}
       <div style={{
@@ -113,20 +174,30 @@ function App() {
         backgroundColor: '#2d2d30',
         borderBottom: '1px solid #3e3e42',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Code2 size={24} color="#007acc" />
-          <h1 style={{ fontSize: '18px', fontWeight: '600' }}>
-            React Coding Agent
-          </h1>
-          <span style={{ 
-            fontSize: '12px', 
-            color: '#888',
-            padding: '2px 8px',
-            backgroundColor: '#3e3e42',
-            borderRadius: '3px',
-          }}>
-            WebContainer
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Code2 size={24} color="#007acc" />
+            <h1 style={{ fontSize: '18px', fontWeight: '600', margin: 0 }}>
+              React Coding Agent
+            </h1>
+          </div>
+          <TemplateSelector
+            currentTemplate={currentTemplate}
+            onSelectTemplate={handleSwitchTemplate}
+            onAutoDetect={handleAutoDetect}
+          />
+          {isSwitching && (
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              fontSize: '13px',
+              color: '#007acc'
+            }}>
+              <RefreshCw size={14} className="spinning" />
+              Switching template...
+            </div>
+          )}
         </div>
         {previewUrl && (
           <a
@@ -206,7 +277,9 @@ function App() {
         fontSize: '12px',
         color: 'white',
       }}>
-        <div>WebContainer Status: Ready</div>
+        <div>
+          {projectTemplates[currentTemplate]?.icon} {projectTemplates[currentTemplate]?.name} | Ready
+        </div>
         <div>{selectedFile || 'No file selected'}</div>
       </div>
     </div>

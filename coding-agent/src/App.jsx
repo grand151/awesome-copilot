@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Code2, Terminal as TerminalIcon, Globe, RefreshCw } from 'lucide-react';
+import { Code2, Terminal as TerminalIcon, Globe, RefreshCw, Zap } from 'lucide-react';
 import FileExplorer from './components/FileExplorer';
 import CodeEditor from './components/CodeEditor';
 import Terminal from './components/Terminal';
 import TemplateSelector from './components/TemplateSelector';
+import QuickStartPanel from './components/QuickStartPanel';
 import { getWebContainer, initializeFiles, switchTemplate, detectAndSwitchTemplate } from './utils/webcontainer';
 import { projectTemplates } from './utils/templates';
+import { applyQuickStart } from './utils/quickstart';
 
 function App() {
   const [webcontainer, setWebcontainer] = useState(null);
@@ -15,6 +17,7 @@ function App() {
   const [previewUrl, setPreviewUrl] = useState('');
   const [currentTemplate, setCurrentTemplate] = useState('nodejs');
   const [isSwitching, setIsSwitching] = useState(false);
+  const [showQuickStart, setShowQuickStart] = useState(false);
 
   useEffect(() => {
     initWebContainer();
@@ -94,6 +97,37 @@ function App() {
     } catch (err) {
       console.error('Auto-detection failed:', err);
       alert('Auto-detection failed. Using current template.');
+    }
+  };
+
+  const handleApplyQuickStart = async (templateKey) => {
+    if (!webcontainer || isSwitching) return;
+    
+    setIsSwitching(true);
+    setPreviewUrl('');
+    
+    try {
+      await applyQuickStart(webcontainer, templateKey);
+      
+      // Detect and set appropriate template type
+      const detectedType = await detectAndSwitchTemplate(webcontainer);
+      setCurrentTemplate(detectedType);
+      
+      // Set appropriate first file
+      const firstFiles = {
+        'express-api': 'server.js',
+        'react-todo': 'src/App.jsx',
+        'typescript-api': 'server.ts',
+        'dockerfile': 'Dockerfile'
+      };
+      setSelectedFile(firstFiles[templateKey] || 'README.md');
+      
+      console.log(`✅ Applied ${templateKey} quick start template`);
+    } catch (err) {
+      console.error('Failed to apply quick start:', err);
+      alert(`Failed to apply template: ${err.message}`);
+    } finally {
+      setIsSwitching(false);
     }
   };
 
@@ -186,6 +220,26 @@ function App() {
             onSelectTemplate={handleSwitchTemplate}
             onAutoDetect={handleAutoDetect}
           />
+          <button
+            onClick={() => setShowQuickStart(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 16px',
+              backgroundColor: '#0e639c',
+              border: 'none',
+              borderRadius: '4px',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '13px',
+              fontWeight: '500',
+            }}
+            title="Quick Start Templates"
+          >
+            <Zap size={16} />
+            Quick Start
+          </button>
           {isSwitching && (
             <div style={{ 
               display: 'flex', 
@@ -266,6 +320,14 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* Quick Start Panel */}
+      {showQuickStart && (
+        <QuickStartPanel
+          onApplyTemplate={handleApplyQuickStart}
+          onClose={() => setShowQuickStart(false)}
+        />
+      )}
 
       {/* Status bar */}
       <div style={{
